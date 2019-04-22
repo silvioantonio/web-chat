@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Live Chat</title>
+        <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <style type="text/css">
+            
+            #corpo,#usuarios{
+                height: 400px;
+                max-height: 400px;
+                overflow: scroll;
+                overflow: auto;
+            }
+            #usuario h4{
+                display: inline;
+            }
+            
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div id="corpo" class=" col-8 bg-primary order-2">
+                    <ul id="mensagens"></ul>
+                </div>
+                <div id="usuarios" class="col-4 bg-success order-1">
+                    <h4>usuarios conectados</h4>
+                </div>
+                <div class="col-6 order-3">
+                    <form>
+                        <input type="text" id="mensagem" autocomplete="off" placeholder="Digite seu nickname...">
+                        <button id="botao" type="submit">Enviar</button>
+                    </form>
+                </div>
+                <div id="status" class="col-4 order-4">
+                    <span id="usuario">
+                        <h4>nickname:</h4>
+                    </span>
+                    <span id="msg"></span>
+                </div>
+            </div>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+
+            $(function(){
+                var socket = io()
+                var nickname = ''
+
+                $('form').submit(function(){
+                    $('#mensagem').attr('placeholder','Digite sua mensagem...')
+                    
+                    socket.emit('status','')//muda o status da digitaçao do cliente
+
+                    if(nickname == ''){
+                        nickname = $('#mensagem').val()
+                        $('#usuario').append(nickname)
+                        $('#usuarios').append(nickname)
+                    }else{
+                        socket.emit('chat mensagem',nickname, $('#mensagem').val())
+                    }               
+
+                    $('#mensagem').val('')
+                    return false
+                })
+
+                socket.on('chat mensagem', function(nick,msg){
+                    if(msg != nickname)
+                        $('#mensagens').append($('<li>').text(nick+': '+msg))
+                })
+
+                socket.on('status', function(digitando){
+                    $('#msg').text(digitando)
+                    $('#msg').attr('style','display:inline-block')
+                })
+
+                $('#mensagem').keypress(function(){
+                    if(nickname == ''){return}
+                    if($('#mensagem').length && ($('#mensagem').val().trim())){
+                        socket.emit('status',` ${nickname} esta digitando...`)
+                    }
+                })
+
+            })
+
+        </script>
+    </body>
+</html>
