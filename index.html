@@ -48,11 +48,15 @@
         <script src="/socket.io/socket.io.js"></script>
         <script>
 
-            $(function(){
+            $(() => {
                 var socket = io()
                 var nickname = ''
 
-                $('form').submit(function(){
+                socket.on('onLine',clientList => clientList.forEach(client => $('#usuarios').append(`<p>${client}</p>`)))
+
+                window.onunload = () => socket.emit('sair',nickname)
+
+                $('form').submit(() => {
                     $('#mensagem').attr('placeholder','Digite sua mensagem...')
                     
                     socket.emit('status','')//muda o status da digitaçao do cliente
@@ -60,7 +64,7 @@
                     if(nickname == ''){
                         nickname = $('#mensagem').val()
                         $('#usuario').append(nickname)
-                        $('#usuarios').append(nickname)
+                        socket.emit('conectado', nickname)
                     }else{
                         socket.emit('chat mensagem',nickname, $('#mensagem').val())
                     }               
@@ -69,17 +73,22 @@
                     return false
                 })
 
-                socket.on('chat mensagem', function(nick,msg){
+                socket.on('conectados', clientList => {
+                    $('p').detach()
+                    clientList.forEach(client => $('#usuarios').append(`<p>${client}</p>`))
+                })
+
+                socket.on('chat mensagem', (nick,msg) => {
                     if(msg != nickname)
                         $('#mensagens').append($('<li>').text(nick+': '+msg))
                 })
 
-                socket.on('status', function(digitando){
+                socket.on('status', digitando => {
                     $('#msg').text(digitando)
                     $('#msg').attr('style','display:inline-block')
                 })
 
-                $('#mensagem').keypress(function(){
+                $('#mensagem').keypress(() => {
                     if(nickname == ''){return}
                     if($('#mensagem').length && ($('#mensagem').val().trim())){
                         socket.emit('status',` ${nickname} esta digitando...`)
